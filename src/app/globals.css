@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @config "../../tailwind.config.js";
 @plugin "@tailwindcss/typography";
+@plugin "tailwindcss-animate";
 
 @theme {
   --color-background: var(--background);

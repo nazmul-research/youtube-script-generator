@@ -15,7 +15,8 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "tailwind-merge": "^2.2.1"
+    "tailwind-merge": "^2.2.1",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.0.9",
