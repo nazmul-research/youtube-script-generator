@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { ScriptConcept, ApiResponse } from '@/lib/types';
-import { Sparkles, Loader2, Youtube, ArrowRight, Play, Layout, Image as ImageIcon, X, FileText } from 'lucide-react';
+import { Sparkles, Loader2, Youtube, ArrowRight, Play, Layout, Image as ImageIcon, X, FileText, Check, Copy } from 'lucide-react';
 
 export default function Home() {
   const [topic, setTopic] = useState('');
@@ -11,10 +11,21 @@ export default function Home() {
   const [error, setError] = useState('');
   const [selectedScript, setSelectedScript] = useState<ScriptConcept | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,22 +180,43 @@ export default function Home() {
                   <p className="text-sm text-slate-500 font-medium">Full Video Script Outline</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setSelectedScript(null)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
-              >
-                <X size={24} className="text-slate-400" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleCopy(selectedScript.fullScript)}
+                  className="p-2.5 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-2 text-sm font-medium text-slate-600"
+                  title="Copy script to clipboard"
+                >
+                  {copied ? (
+                    <>
+                      <Check size={18} className="text-green-600" />
+                      <span className="text-green-600">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={18} />
+                      <span>Copy Script</span>
+                    </>
+                  )}
+                </button>
+                <div className="w-px h-6 bg-slate-200 mx-1"></div>
+                <button 
+                  onClick={() => setSelectedScript(null)}
+                  className="p-2.5 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-slate-400"
+                  title="Close modal"
+                >
+                  <X size={24} />
+                </button>
+              </div>
             </div>
             
             <div className="flex-1 overflow-y-auto p-8">
-              <div className="prose prose-slate max-w-none">
+              <div className="max-w-none">
                 <div className="mb-8">
-                  <h3 className="text-lg font-bold text-slate-900 mb-3 flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                     <span className="w-2 h-6 bg-red-600 rounded-full"></span>
-                    Script Content
+                    Detailed Script Breakdown
                   </h3>
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap font-sans text-base">
                     {selectedScript.fullScript}
                   </div>
                 </div>
@@ -193,25 +225,25 @@ export default function Home() {
                   <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
                     <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
                       <Play size={16} />
-                      Opening Hook
+                      Viral Hook
                     </h4>
-                    <p className="text-red-900/80 italic">"{selectedScript.hook}"</p>
+                    <p className="text-red-900/80 italic leading-relaxed">"{selectedScript.hook}"</p>
                   </div>
                   <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
                     <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
                       <ImageIcon size={16} />
-                      Thumbnail Concept
+                      Thumbnail Visual Idea
                     </h4>
-                    <p className="text-blue-900/80">{selectedScript.thumbnailIdea}</p>
+                    <p className="text-blue-900/80 leading-relaxed">{selectedScript.thumbnailIdea}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t bg-slate-50 flex justify-end">
+            <div className="p-6 border-t bg-slate-50 flex justify-end gap-3">
               <button 
                 onClick={() => setSelectedScript(null)}
-                className="px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all"
+                className="px-8 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all shadow-lg shadow-slate-200"
               >
                 Close Script
               </button>
