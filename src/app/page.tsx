@@ -19,9 +19,11 @@ export default function Home() {
 
   const handleCopy = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (typeof window !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      }
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -53,9 +55,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] text-[#1E293B]">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Header */}
-      <nav className="border-b bg-white py-4 px-6 sticky top-0 z-50 shadow-sm">
+      <nav className="border-b bg-white py-4 px-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl text-red-600">
             <Youtube size={28} />
@@ -68,7 +70,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto px-6 py-12">
         {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-extrabold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-rose-400">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-slate-900">
             Generate Viral YouTube Scripts
           </h1>
           <p className="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -77,7 +79,7 @@ export default function Home() {
         </div>
 
         {/* Input Form */}
-        <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-xl border border-slate-100 mb-16">
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-slate-100 mb-16">
           <form onSubmit={handleGenerate} className="space-y-4">
             <div>
               <label htmlFor="topic" className="block text-sm font-semibold text-slate-700 mb-2">
@@ -96,12 +98,12 @@ export default function Home() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-lg shadow-red-200"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md"
             >
               {loading ? (
                 <>
                   <Loader2 className="animate-spin" />
-                  Analyzing YouTube Trends...
+                  Analyzing...
                 </>
               ) : (
                 <>
@@ -116,9 +118,9 @@ export default function Home() {
 
         {/* Results Section */}
         {scripts.length > 0 && (
-          <div className="grid md:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid md:grid-cols-3 gap-8">
             {scripts.map((script, idx) => (
-              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-xl border border-slate-100 flex flex-col hover:scale-[1.02] transition-transform">
+              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col hover:shadow-lg transition-shadow">
                 <div className="p-6 flex-1">
                   <div className="flex items-center gap-2 text-xs font-bold text-red-500 uppercase tracking-wider mb-3">
                     <Layout size={14} />
@@ -168,82 +170,80 @@ export default function Home() {
 
       {/* Script Modal */}
       {isMounted && selectedScript && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
             <div className="p-6 border-b flex items-center justify-between bg-white sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <div className="bg-red-100 p-2 rounded-lg text-red-600">
                   <FileText size={24} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold line-clamp-1">{selectedScript.title}</h2>
-                  <p className="text-sm text-slate-500 font-medium">Full Video Script Outline</p>
+                  <h2 className="text-xl font-bold text-slate-900 truncate max-w-[200px] md:max-w-md">{selectedScript.title}</h2>
+                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Video Script Outline</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleCopy(selectedScript.fullScript)}
-                  className="p-2.5 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-2 text-sm font-medium text-slate-600"
-                  title="Copy script to clipboard"
+                  className="p-2 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-2 text-sm font-medium text-slate-600"
+                  title="Copy script"
                 >
                   {copied ? (
                     <>
                       <Check size={18} className="text-green-600" />
-                      <span className="text-green-600">Copied!</span>
+                      <span className="text-green-600 hidden md:inline">Copied!</span>
                     </>
                   ) : (
                     <>
                       <Copy size={18} />
-                      <span>Copy Script</span>
+                      <span className="hidden md:inline">Copy Script</span>
                     </>
                   )}
                 </button>
                 <div className="w-px h-6 bg-slate-200 mx-1"></div>
                 <button 
                   onClick={() => setSelectedScript(null)}
-                  className="p-2.5 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-slate-400"
-                  title="Close modal"
+                  className="p-2 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-slate-400"
+                  title="Close"
                 >
                   <X size={24} />
                 </button>
               </div>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-8">
-              <div className="max-w-none">
-                <div className="mb-8">
-                  <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                    <span className="w-2 h-6 bg-red-600 rounded-full"></span>
-                    Detailed Script Breakdown
-                  </h3>
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap font-sans text-base">
-                    {selectedScript.fullScript}
-                  </div>
+            <div className="flex-1 overflow-y-auto p-8 bg-white">
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-red-600 rounded-full"></span>
+                  Detailed Script Content
+                </h3>
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap font-sans text-base">
+                  {selectedScript.fullScript}
                 </div>
+              </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
-                    <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
-                      <Play size={16} />
-                      Viral Hook
-                    </h4>
-                    <p className="text-red-900/80 italic leading-relaxed">"{selectedScript.hook}"</p>
-                  </div>
-                  <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
-                    <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
-                      <ImageIcon size={16} />
-                      Thumbnail Visual Idea
-                    </h4>
-                    <p className="text-blue-900/80 leading-relaxed">{selectedScript.thumbnailIdea}</p>
-                  </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
+                  <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
+                    <Play size={16} />
+                    Viral Hook
+                  </h4>
+                  <p className="text-red-900/80 italic leading-relaxed text-sm">"{selectedScript.hook}"</p>
+                </div>
+                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                  <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                    <ImageIcon size={16} />
+                    Thumbnail Idea
+                  </h4>
+                  <p className="text-blue-900/80 leading-relaxed text-sm">{selectedScript.thumbnailIdea}</p>
                 </div>
               </div>
             </div>
 
-            <div className="p-6 border-t bg-slate-50 flex justify-end gap-3">
+            <div className="p-6 border-t bg-slate-50 flex justify-end">
               <button 
                 onClick={() => setSelectedScript(null)}
-                className="px-8 py-3 bg-slate-800 hover:bg-slate-900 text-white font-bold rounded-xl transition-all shadow-lg shadow-slate-200"
+                className="px-8 py-3 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition-all"
               >
                 Close Script
               </button>
