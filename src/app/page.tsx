@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ScriptConcept, ApiResponse } from '@/lib/types';
 import { Sparkles, Loader2, Youtube, ArrowRight, Play, Layout, Image as ImageIcon, X, FileText } from 'lucide-react';
 
@@ -10,6 +10,11 @@ export default function Home() {
   const [scripts, setScripts] = useState<ScriptConcept[]>([]);
   const [error, setError] = useState('');
   const [selectedScript, setSelectedScript] = useState<ScriptConcept | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +156,7 @@ export default function Home() {
       </div>
 
       {/* Script Modal */}
-      {selectedScript && (
+      {isMounted && selectedScript && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
           <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b flex items-center justify-between bg-white sticky top-0 z-10">
