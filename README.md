@@ -53,3 +53,6 @@ A powerful SaaS MVP built with **Next.js 15 (App Router)** and **Tailwind CSS v4
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+---
+*Last Updated: March 2026*
