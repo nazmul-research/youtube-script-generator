@@ -18,14 +18,25 @@ export default function Home() {
   }, []);
 
   const handleCopy = async (text: string) => {
+    if (typeof window === 'undefined') return;
     try {
-      if (typeof window !== 'undefined' && navigator.clipboard) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } else {
+        // Fallback for older browsers if needed, but navigator.clipboard is standard now
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
     } catch (err) {
-      console.error('Copy failed:', err);
+      console.error('Failed to copy text: ', err);
     }
   };
 
@@ -44,126 +55,209 @@ export default function Home() {
         body: JSON.stringify({ topic }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || 'Server error');
-      }
-
       const data: ApiResponse = await res.json();
-      if (data.scripts) {
-        setScripts(data.scripts);
-      } else {
-        throw new Error('No scripts generated');
-      }
+      if (data.error) throw new Error(data.error);
+      if (data.scripts) setScripts(data.scripts);
     } catch (err: any) {
-      setError(err.message || 'Something went wrong. Please check your API keys.');
+      setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isMounted) return null;
-
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      {/* Navbar */}
-      <nav className="border-b bg-white py-4 px-6 sticky top-0 z-40">
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {/* Header */}
+      <nav className="border-b bg-white py-4 px-6 sticky top-0 z-40 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 font-bold text-xl text-red-600">
             <Youtube size={28} />
             <span>TubeScript AI</span>
           </div>
-          <div className="text-sm text-slate-500">v1.0</div>
+          <div className="text-sm font-medium text-slate-500">SaaS MVP v1.0</div>
         </div>
       </nav>
 
       <div className="max-w-6xl mx-auto px-6 py-12">
-        {/* Hero */}
+        {/* Hero Section */}
         <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Generate Viral YouTube Scripts</h1>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">Analyze trends and generate scripts in seconds.</p>
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-slate-900">
+            Generate Viral YouTube Scripts
+          </h1>
+          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
+            Our AI analyzes YouTube trends to generate data-driven hooks, titles, and 5-minute scripts optimized for retention.
+          </p>
         </div>
 
-        {/* Form */}
-        <div className="max-w-xl mx-auto bg-white p-6 border rounded-xl shadow-sm mb-12">
+        {/* Input Form */}
+        <div className="max-w-2xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-slate-100 mb-16">
           <form onSubmit={handleGenerate} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Enter video topic..."
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              className="w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-red-500"
-              required
-            />
+            <div>
+              <label htmlFor="topic" className="block text-sm font-semibold text-slate-700 mb-2">
+                What is your video topic?
+              </label>
+              <input
+                id="topic"
+                type="text"
+                placeholder="e.g., How to cook the perfect steak, React for Beginners..."
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                required
+              />
+            </div>
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md"
             >
-              {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-              {loading ? 'Generating...' : 'Generate 3 Variations'}
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles size={20} />
+                  Generate 3 Script Variations
+                </>
+              )}
             </button>
           </form>
-          {error && <p className="mt-3 text-red-600 text-sm text-center font-medium">{error}</p>}
+          {error && <p className="mt-4 text-red-500 text-sm text-center font-medium">⚠️ {error}</p>}
         </div>
 
-        {/* Results */}
+        {/* Results Section */}
         {scripts.length > 0 && (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {scripts.map((script, idx) => (
-              <div key={idx} className="border rounded-xl p-6 bg-white flex flex-col hover:border-red-200 transition-colors">
-                <div className="text-xs font-bold text-red-500 mb-2 uppercase">Concept {idx + 1}</div>
-                <h3 className="text-lg font-bold mb-4">{script.title}</h3>
-                <div className="text-sm text-slate-600 mb-6 flex-1 italic">"{script.hook.substring(0, 100)}..."</div>
-                <button 
-                  onClick={() => setSelectedScript(script)}
-                  className="w-full py-2 bg-slate-50 border rounded-lg font-bold text-sm hover:bg-slate-100 flex items-center justify-center gap-2"
-                >
-                  View Script <ArrowRight size={14} />
-                </button>
+              <div key={idx} className="bg-white rounded-2xl overflow-hidden shadow-md border border-slate-100 flex flex-col hover:shadow-lg transition-shadow">
+                <div className="p-6 flex-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-red-500 uppercase tracking-wider mb-3">
+                    <Layout size={14} />
+                    Concept {idx + 1}
+                  </div>
+                  <h3 className="text-xl font-bold mb-4 line-clamp-2 leading-tight">
+                    {script.title}
+                  </h3>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-2">
+                        <Play size={14} className="text-red-600" />
+                        The Hook
+                      </h4>
+                      <p className="text-slate-600 text-sm leading-relaxed italic bg-slate-50 p-3 rounded-lg border-l-4 border-red-500">
+                        "{script.hook}"
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-2">
+                        <ImageIcon size={14} className="text-blue-500" />
+                        Thumbnail Idea
+                      </h4>
+                      <p className="text-slate-600 text-sm leading-relaxed">
+                        {script.thumbnailIdea}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-slate-50 border-t border-slate-100">
+                  <button 
+                    onClick={() => setSelectedScript(script)}
+                    className="w-full bg-white hover:bg-slate-100 text-slate-800 font-bold py-3 rounded-xl border border-slate-200 flex items-center justify-center gap-2 transition-all shadow-sm"
+                  >
+                    View Full 5-Min Script
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Modal */}
-      {selectedScript && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-2xl rounded-xl shadow-xl flex flex-col max-h-[90vh]">
-            <div className="p-4 border-b flex items-center justify-between">
-              <h2 className="font-bold truncate pr-4">{selectedScript.title}</h2>
+      {/* Script Modal */}
+      {isMounted && selectedScript && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-4xl max-h-[90vh] rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-6 border-b flex items-center justify-between bg-white sticky top-0 z-10">
+              <div className="flex items-center gap-3">
+                <div className="bg-red-100 p-2 rounded-lg text-red-600">
+                  <FileText size={24} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 truncate max-w-[200px] md:max-w-md">{selectedScript.title}</h2>
+                  <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Video Script Outline</p>
+                </div>
+              </div>
               <div className="flex items-center gap-2">
-                <button 
+                <button
                   onClick={() => handleCopy(selectedScript.fullScript)}
-                  className="p-2 hover:bg-slate-100 rounded-lg"
-                  title="Copy"
+                  className="p-2 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-2 text-sm font-medium text-slate-600"
+                  title="Copy script"
                 >
-                  {copied ? <Check size={20} className="text-green-600" /> : <Copy size={20} />}
+                  {copied ? (
+                    <>
+                      <Check size={18} className="text-green-600" />
+                      <span className="text-green-600 hidden md:inline">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={18} />
+                      <span className="hidden md:inline">Copy Script</span>
+                    </>
+                  )}
                 </button>
+                <div className="w-px h-6 bg-slate-200 mx-1"></div>
                 <button 
                   onClick={() => setSelectedScript(null)}
-                  className="p-2 hover:bg-red-50 rounded-lg text-slate-400 hover:text-red-600"
+                  className="p-2 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all text-slate-400"
+                  title="Close"
                 >
                   <X size={24} />
                 </button>
               </div>
             </div>
-            <div className="p-6 overflow-y-auto bg-slate-50 space-y-6">
-              <div>
-                <h4 className="font-bold text-sm mb-2 flex items-center gap-2 text-red-600"><Play size={14} /> Opening Hook</h4>
-                <p className="p-4 bg-white border rounded-lg text-sm italic">"{selectedScript.hook}"</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm mb-2 flex items-center gap-2 text-blue-600"><ImageIcon size={14} /> Thumbnail Idea</h4>
-                <p className="p-4 bg-white border rounded-lg text-sm">{selectedScript.thumbnailIdea}</p>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm mb-2 flex items-center gap-2 text-slate-700"><FileText size={14} /> Full Script Content</h4>
-                <div className="p-4 bg-white border rounded-lg text-sm whitespace-pre-wrap leading-relaxed">
+            
+            <div className="flex-1 overflow-y-auto p-8 bg-white">
+              <div className="mb-8">
+                <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-red-600 rounded-full"></span>
+                  Detailed Script Content
+                </h3>
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-wrap font-sans text-base">
                   {selectedScript.fullScript}
                 </div>
               </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-red-50/50 p-6 rounded-2xl border border-red-100">
+                  <h4 className="font-bold text-red-700 mb-2 flex items-center gap-2">
+                    <Play size={16} />
+                    Viral Hook
+                  </h4>
+                  <p className="text-red-900/80 italic leading-relaxed text-sm">"{selectedScript.hook}"</p>
+                </div>
+                <div className="bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                  <h4 className="font-bold text-blue-700 mb-2 flex items-center gap-2">
+                    <ImageIcon size={16} />
+                    Thumbnail Idea
+                  </h4>
+                  <p className="text-blue-900/80 leading-relaxed text-sm">{selectedScript.thumbnailIdea}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-slate-50 flex justify-end">
+              <button 
+                onClick={() => setSelectedScript(null)}
+                className="px-8 py-3 bg-slate-900 hover:bg-black text-white font-bold rounded-xl transition-all"
+              >
+                Close Script
+              </button>
             </div>
           </div>
         </div>
